@@ -1,0 +1,95 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build, test and publish (win-x64)
+    runs-on: windows-latest
+    permissions:
+      # Needed only by the tag-triggered release step below.
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore AionLauncher.sln
+
+      - name: Build
+        run: dotnet build AionLauncher.sln -c Release --no-restore
+
+      - name: Test
+        run: >
+          dotnet test tests/AionLauncher.Core.Tests/AionLauncher.Core.Tests.csproj
+          -c Release --no-build --logger "trx;LogFileName=tests.trx" --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/
+          if-no-files-found: warn
+
+      - name: Publish single-file exe
+        run: >
+          dotnet publish src/AionLauncher/AionLauncher.csproj
+          -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+          -o publish
+
+      - name: Hash the exe
+        shell: pwsh
+        run: |
+          $exe = 'publish/AionLauncher.exe'
+          if (-not (Test-Path $exe)) { throw "publish did not produce $exe" }
+          $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLower()
+          $size = (Get-Item $exe).Length
+          "$hash  AionLauncher.exe" | Out-File -FilePath publish/SHA256SUMS.txt -Encoding ascii
+          "## AionLauncher.exe" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "- SHA256: ``$hash``" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "- Size: $size bytes" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "SHA256=$hash" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Upload launcher artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AionLauncher-win-x64
+          path: publish/
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $notes = @"
+          Лаунчер Aion 4.8, сборка ``${{ github.ref_name }}``.
+
+          Файл: ``AionLauncher.exe`` (self-contained win-x64, .NET 8, без установки).
+          SHA256: ``$env:SHA256``
+
+          Положите ``AionLauncher.exe`` и ``launcher.json`` в корень папки с игрой.
+          Подписи у файла нет — при первом запуске Windows SmartScreen покажет предупреждение,
+          нажмите «Подробнее» → «Выполнить в любом случае». Сверяйте SHA256 перед запуском.
+          "@
+          $notes | Out-File -FilePath release-notes.md -Encoding utf8
+          gh release create "${{ github.ref_name }}" `
+            publish/AionLauncher.exe `
+            publish/launcher.json `
+            publish/SHA256SUMS.txt `
+            --title "${{ github.ref_name }}" `
+            --notes-file release-notes.md

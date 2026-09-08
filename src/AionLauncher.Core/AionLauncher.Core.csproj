@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>AionLauncher.Core</RootNamespace>
+    <!-- Deliberately platform-neutral: every rule the launcher enforces must be unit-testable on Linux/CI. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- No stray .pdb next to the published exe. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+</Project>

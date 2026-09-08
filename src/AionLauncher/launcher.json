@@ -1,0 +1,10 @@
+{
+  "gameDir": "",
+  "serverHost": "127.0.0.1",
+  "loginPort": 2106,
+  "newsUrl": "",
+  "statusUrl": "",
+  "prefer32Bit": false,
+  "patchZipUrl": "https://github.com/beyond-aion/aion-version-dll/releases/download/v1.5.0/version-dll.zip",
+  "patchZipSha256": "3c0034fa381a248a73b3034f47fdac40dc8b8665079b1a067920b0c519014670"
+}

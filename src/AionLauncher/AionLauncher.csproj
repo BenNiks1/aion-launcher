@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- Lets the project build and publish for win-x64 from Linux/CI as well as from Windows. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>AionLauncher</AssemblyName>
+    <RootNamespace>AionLauncher</RootNamespace>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <Version>0.1.0</Version>
+    <Product>Aion Launcher</Product>
+    <Company>BenNiks1</Company>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- Publish shape: one exe players download. Keep the file name stable across releases (AV reputation). -->
+  <PropertyGroup>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+    <!-- No UPX, no extra packing: those are exactly what heuristic AV flags. -->
+    <PublishReadyToRun>false</PublishReadyToRun>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AionLauncher.Core\AionLauncher.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="launcher.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
